@@ -19,7 +19,7 @@ input:not([type=checkbox]),select{width:100%;padding:9px;border:1px solid var(--
 .box{border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:14px;background:var(--bg)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chips label{margin:0;color:var(--tx);border:1px solid var(--bd);border-radius:20px;padding:5px 12px;background:var(--sf);cursor:pointer;font-size:14px;display:flex;gap:6px;align-items:center}
 .chips label:has(input:checked){background:var(--ac2);border-color:var(--ac)}
-.sr{display:grid;grid-template-columns:1fr 90px 40px;gap:8px;margin-bottom:6px;align-items:stretch}.sr button{padding:0}
+.sr{display:grid;grid-template-columns:1fr 90px 40px;gap:8px;margin-bottom:6px;align-items:stretch}.sr button{padding:0}.dr{display:grid;grid-template-columns:90px 1fr 1fr;gap:8px;margin-bottom:6px;align-items:center}.dr label{margin:0;color:var(--tx);display:flex;gap:6px;align-items:center;font-size:14px}
 .item{border:1px solid var(--bd);border-radius:8px;padding:10px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}
 .item small{color:var(--mu);display:block}.acts{display:flex;gap:6px;flex-shrink:0}.d{color:var(--er)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.bar select{width:auto;min-width:200px}
@@ -65,14 +65,14 @@ td b{display:block;font-size:13px}td span{font-size:12px;color:var(--mu)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const D=["I","II","III","IV","V"],TABS=["Zənglər","Siniflər","Müəllimlər","Cədvəl"];
+const D=["I","II","III","IV","V"],TABS=["1 Zənglər","2 Siniflər","3 Müəllimlər","4 Cədvəl"];
 let S={bells:[],classes:[],teachers:[]},placed=[],rows=[{s:"",h:""}],eC=-1,eT=-1,eA=null;
 const $=i=>document.getElementById(i),m=t=>{const[h,n]=t.split(":");return+h*60+ +n},hm=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),norm=s=>s.trim().toLowerCase();
 const save=()=>{placed=[];$("out").innerHTML="";try{localStorage.setItem("cedvel2",JSON.stringify(S))}catch(e){}};
 function tab(i){TABS.forEach((_,k)=>{$("s"+k).classList.toggle("on",k==i);$("nav").children[k].classList.toggle("on",k==i)});if(i==2)tForm(1);if(i==3)render()}
 function init(){try{const v=localStorage.getItem("cedvel2");if(v)S=JSON.parse(v)}catch(e){}
-S.teachers.forEach(t=>{if(!t.as)t.as=t.a?[{s:"",c:t.c||[]}]:(t.s||"").split(",").map(x=>x.trim()).filter(Boolean).map(x=>({s:x,c:t.c||[]}))});
+S.teachers.forEach(t=>{if(!t.as)t.as=t.a?[{s:"",c:t.c||[]}]:(t.s||"").split(",").map(x=>x.trim()).filter(Boolean).map(x=>({s:x,c:t.c||[]}));t.a=false;if(!t.tm)t.tm=[0,1,2,3,4].map(i=>(t.d||[]).includes(i)?{f:t.f,t:t.t}:null)});
 $("nav").innerHTML=TABS.map((t,i)=>`<button onclick="tab(${i})">${t}</button>`).join("");
 ["bn","bs","bl","bb","ba","bg"].forEach(i=>$(i).oninput=bells);
 if(S.bells.length)showBells();else bells();cForm();list();$("gp").checked=!!S.gap;tab(0)}
@@ -92,44 +92,44 @@ if(eC>=0){const old=S.classes[eC].n;S.teachers.forEach(t=>t.as.forEach(b=>b.c=b.
 eC=-1;rows=[{s:"",h:""}];save();cForm();list()}
 function editC(i){eC=i;rows=[{s:"",h:""}];cForm();scrollTo(0,0)}
 // müəllimlər
-function tForm(keep){const o=keep&&$("tn")?{n:$("tn").value,f:$("tfr").value,t:$("tto").value,d:[...document.querySelectorAll("#td input:checked")].map(Number),a:$("ta").checked}:null;
-const base=eT>=0?S.teachers[eT]:{n:"",a:false,as:[{s:"",c:[]}],d:[0,1,2,3,4],f:"08:00",t:"14:00"},t=o||base;
+function tForm(keep){const o=keep&&$("tn")?{n:$("tn").value,tm:D.map((_,i)=>$("dc"+i).checked?{f:$("df"+i).value,t:$("dt"+i).value}:null)}:null;
+const base=eT>=0?S.teachers[eT]:{n:"",as:[{s:"",c:[]}],tm:D.map(()=>({f:"08:00",t:"14:00"}))},t=o||base;
 if(!keep||!eA)eA=JSON.parse(JSON.stringify(base.as.length?base.as:[{s:"",c:[]}]));
 if(!S.classes.length){$("tf").innerHTML='<div class="msg e">Əvvəlcə siniflər bölməsində sinif əlavə edin.</div>';return}
-const bl=t.a?[eA[0]]:eA;
-$("tf").innerHTML=`<div class="row"><div><label>Ad Soyad</label><input id="tn" value="${esc(t.n)}"></div>
-<div><label>Neçədən</label><input id="tfr" type="time" value="${t.f}"></div><div><label>Neçəyə qədər</label><input id="tto" type="time" value="${t.t}"></div></div>
-<div class="chips" style="margin-top:10px"><label><input type="checkbox" id="ta" ${t.a?"checked":""} onchange="tForm(1)">Bütün fənləri keçir (ibtidai sinif müəllimi)</label></div>
-<label>${t.a?"Hansı siniflərdə dərs deyir":"Hansı fənni hansı siniflərdə deyir"}</label>
-${bl.map((b,i)=>`<div class="box">${t.a?"":`<label>Fənn</label><input list="dl" placeholder="Riyaziyyat" value="${esc(b.s)}" oninput="eA[${i}].s=this.value">`}<label>Siniflər</label><div class="chips">${S.classes.map((c,k)=>`<label><input type="checkbox" ${b.c.includes(c.n)?"checked":""} onchange="tcl(${i},${k},this.checked)">${esc(c.n)}</label>`).join("")}</div>${bl.length>1?`<div class="bar"><button class="d" onclick="eA.splice(${i},1);tForm(1)">× Bu bloku sil</button></div>`:""}</div>`).join("")}
-<label>Hansı günlər gələ bilir</label><div class="chips" id="td">${D.map((d,i)=>`<label><input type="checkbox" value="${i}" ${t.d.includes(i)?"checked":""}>${d} gün</label>`).join("")}</div>
-<div class="bar">${t.a?"":`<button onclick="eA.push({s:'',c:[]});tForm(1)">+ Başqa fənn / siniflər əlavə et</button>`}<button class="p" onclick="saveT()">${eT>=0?"Dəyişikliyi saxla":"Müəllimi əlavə et"}</button>${eT>=0?'<button onclick="eT=-1;tForm()">Ləğv et</button>':""}</div>`}
+$("tf").innerHTML=`<div class="row"><div><label>Ad Soyad</label><input id="tn" value="${esc(t.n)}"></div></div>
+<label>Hansı fənni hansı siniflərdə deyir</label>
+${eA.map((b,i)=>`<div class="box"><label>Fənn (bir neçə fənn: vergüllə)</label><input list="dl" placeholder="Riyaziyyat, Həyat bilgisi" value="${esc(b.s)}" oninput="eA[${i}].s=this.value"><label>Siniflər</label><div class="chips">${S.classes.map((c,k)=>`<label><input type="checkbox" ${b.c.includes(c.n)?"checked":""} onchange="tcl(${i},${k},this.checked)">${esc(c.n)}</label>`).join("")}</div>${eA.length>1?`<div class="bar"><button class="d" onclick="eA.splice(${i},1);tForm(1)">× Bu bloku sil</button></div>`:""}</div>`).join("")}
+<div class="bar"><button onclick="eA.push({s:'',c:[]});tForm(1)">+ Başqa fənn / siniflər əlavə et</button></div>
+<label>Hansı günlər və hansı saatlar arasında gələ bilir</label>
+<div id="td">${D.map((d,i)=>{const w=t.tm[i];return `<div class="dr"><label><input type="checkbox" id="dc${i}" ${w?"checked":""}>${d} gün</label><input type="time" id="df${i}" value="${w?w.f:"08:00"}"><input type="time" id="dt${i}" value="${w?w.t:"14:00"}"></div>`}).join("")}</div>
+<div class="bar"><button class="p" onclick="saveT()">${eT>=0?"Dəyişikliyi saxla":"Müəllimi əlavə et"}</button>${eT>=0?'<button onclick="eT=-1;tForm()">Ləğv et</button>':""}</div>`}
 function tcl(i,k,v){const n=S.classes[k].n;if(v){if(!eA[i].c.includes(n))eA[i].c.push(n)}else eA[i].c=eA[i].c.filter(x=>x!=n)}
-const clsOf=t=>[...new Set(t.as.flatMap(x=>x.c))],subjOf=t=>t.a?"bütün fənlər":[...new Set(t.as.map(x=>x.s))].join(", "),
-asText=t=>t.a?"Bütün fənlər: "+esc(clsOf(t).join(", ")):t.as.map(x=>esc(x.s)+" → "+esc(x.c.join(", "))).join("; "),
-can=(t,s,c)=>t.a?t.as.some(x=>x.c.includes(c)):t.as.some(x=>norm(x.s)==norm(s)&&x.c.includes(c));
-function saveT(){const n=$("tn").value.trim(),a=$("ta").checked,d=[...document.querySelectorAll("#td input:checked")].map(x=>+x.value),
-bl=(a?[eA[0]]:eA).map(b=>({s:a?"":b.s.trim(),c:b.c.filter(x=>S.classes.some(y=>y.n==x))})).filter(b=>b.c.length&&(a||b.s));
-if(!n||!bl.length||!d.length)return alert("Ad, ən azı bir fənn ilə sinif (və ya “bütün fənləri keçir” ilə sinif) və bir gün seçin.");
-if(!$("tfr").value||!$("tto").value||m($("tfr").value)>=m($("tto").value))return alert("Saat aralığı düz deyil.");
-const o={n,a,as:bl,d,f:$("tfr").value,t:$("tto").value};eT>=0?S.teachers[eT]=o:S.teachers.push(o);eT=-1;save();tForm();list()}
+const sp=s=>s.split(",").map(y=>y.trim()).filter(Boolean),clsOf=t=>[...new Set(t.as.flatMap(x=>x.c))],subjOf=t=>[...new Set(t.as.flatMap(x=>sp(x.s)))].join(", "),
+asText=t=>t.as.map(x=>esc(x.s)+" → "+esc(x.c.join(", "))).join("; "),
+dayText=t=>t.tm.map((w,i)=>w?D[i]+" "+w.f+"–"+w.t:"").filter(Boolean).join(", "),
+can=(t,s,c)=>t.as.some(x=>x.c.includes(c)&&sp(x.s).some(y=>norm(y)==norm(s)));
+function saveT(){const n=$("tn").value.trim(),tm=D.map((_,i)=>$("dc"+i).checked?{f:$("df"+i).value,t:$("dt"+i).value}:null),
+bl=eA.map(b=>({s:sp(b.s).join(", "),c:b.c.filter(x=>S.classes.some(y=>y.n==x))})).filter(b=>b.c.length&&b.s);
+if(!n||!bl.length||!tm.some(Boolean))return alert("Ad, ən azı bir fənn ilə sinif və bir gün seçin.");
+if(tm.some(w=>w&&(!w.f||!w.t||m(w.f)>=m(w.t))))return alert("Seçilmiş günlərin saat aralığı düz deyil (başlama bitmədən əvvəl olmalıdır).");
+const o={n,a:false,as:bl,tm};eT>=0?S.teachers[eT]=o:S.teachers.push(o);eT=-1;save();tForm();list()}
 function editT(i){eT=i;tForm();scrollTo(0,0)}
 function del(k,i){S[k].splice(i,1);if(k=="classes"){eC=-1;rows=[{s:"",h:""}];cForm()}else{eT=-1;tForm()}save();list()}
 function list(){$("cl").innerHTML=S.classes.map((c,i)=>`<div class="item"><div><b>${esc(c.n)}</b><small>${c.plan.map(p=>esc(p.s)+" "+p.h).join(", ")} (cəmi ${c.plan.reduce((a,p)=>a+p.h,0)} saat, günlər üzrə ${dm(c).join("/")} dərs)</small></div><div class="acts"><button onclick="editC(${i})">Dəyiş</button><button class="d" onclick="twice(this,()=>del('classes',${i}))">Sil</button></div></div>`).join("");
-$("tl").innerHTML=S.teachers.map((t,i)=>`<div class="item"><div><b>${esc(t.n)}</b><small>${asText(t)} | ${t.d.map(x=>D[x]).join(", ")} | ${t.f}–${t.t}</small></div><div class="acts"><button onclick="editT(${i})">Dəyiş</button><button class="d" onclick="twice(this,()=>del('teachers',${i}))">Sil</button></div></div>`).join("");
-$("dl").innerHTML=[...new Set(S.classes.flatMap(c=>c.plan.map(p=>p.s)).concat(S.teachers.flatMap(t=>t.as.map(x=>x.s).filter(Boolean))))].map(s=>`<option value="${esc(s)}">`).join("")}
+$("tl").innerHTML=S.teachers.map((t,i)=>`<div class="item"><div><b>${esc(t.n)}</b><small>${asText(t)} | ${dayText(t)}</small></div><div class="acts"><button onclick="editT(${i})">Dəyiş</button><button class="d" onclick="twice(this,()=>del('teachers',${i}))">Sil</button></div></div>`).join("");
+$("dl").innerHTML=[...new Set(S.classes.flatMap(c=>c.plan.map(p=>p.s)).concat(S.teachers.flatMap(t=>t.as.flatMap(x=>sp(x.s)))))].map(s=>`<option value="${esc(s)}">`).join("")}
 function sample(){const pl=h=>[["Riyaziyyat",h],["Azərbaycan dili",4],["Tarix",2],["İngilis dili",3],["Fiziki tərbiyə",2]].map(([s,h])=>({s,h}));
 S.classes=[{n:"5A",plan:pl(4),mx:5},{n:"5B",plan:pl(4),mx:5},{n:"6A",plan:pl(5),mx:6}];const A=["5A","5B","6A"],T=(n,s,d,f,t)=>({n,s,c:A,d,f,t});
 S.teachers=[T("Aygün Məmmədova","Riyaziyyat",[0,1,2,3,4],"08:00","14:30"),T("Leyla Həsənova","Azərbaycan dili",[0,1,2,3],"08:00","13:30"),T("Rəşad Əliyev","Tarix",[0,2,4],"08:00","13:30"),T("Nigar Quliyeva","İngilis dili",[1,2,3,4],"09:00","14:30"),T("Elçin Bağırov","Fiziki tərbiyə",[0,1,3],"08:00","13:30")];
 save();list();gen()}
 // həlledici
 function solve(){const P=S.bells.map(b=>b.split("-").map(m)),NP=P.length,ND=5;
-const av=S.teachers.map(t=>{const f=m(t.f),e=m(t.t);return Array.from({length:ND},(_,d)=>P.map(p=>t.d.includes(d)&&p[0]>=f&&p[1]<=e))});
+const av=S.teachers.map(t=>Array.from({length:ND},(_,d)=>P.map(p=>{const w=t.tm[d];return !!w&&p[0]>=m(w.f)&&p[1]<=m(w.t)})));
 const MX={};S.classes.forEach(c=>MX[c.n]=dm(c));const cnt=av.map(a=>a.flat().filter(Boolean).length),ld=S.teachers.map(()=>0),L=[];
 for(const c of S.classes){const tot=c.plan.reduce((a,p)=>a+p.h,0),mx=MX[c.n].reduce((a,b)=>a+b,0);if(tot>mx)throw`${c.n} sinfinin ${tot} saatı həftəlik ${mx} yuvaya sığmır.`;
 for(const p of c.plan){const cd=S.teachers.map((t,i)=>i).filter(i=>can(S.teachers[i],p.s,c.n));
 if(!cd.length)throw`${c.n} sinfinin "${p.s}" fənni üçün müəllim yoxdur.`;
-const ex=i=>S.teachers[i].a?0:1;cd.sort((a,b)=>ex(b)-ex(a)||ld[a]/Math.max(cnt[a],1)-ld[b]/Math.max(cnt[b],1));let t=cd.find(i=>ld[i]+p.h<=cnt[i]);if(t===undefined)t=cd[0];ld[t]+=p.h;
+const ex=i=>1;cd.sort((a,b)=>ex(b)-ex(a)||ld[a]/Math.max(cnt[a],1)-ld[b]/Math.max(cnt[b],1));let t=cd.find(i=>ld[i]+p.h<=cnt[i]);if(t===undefined)t=cd[0];ld[t]+=p.h;
 if(ld[t]>cnt[t])throw`${S.teachers[t].n} müəllimin uyğun vaxtı (${cnt[t]} saat) ${ld[t]} dərs üçün kifayət etmir.`;
 for(let k=0;k<p.h;k++)L.push({c:c.n,s:p.s,t})}}
 const T0=Date.now();for(let r=0;r<60&&Date.now()-T0<9000;r++){const TS=S.teachers.map(()=>Array.from({length:ND},()=>Array(NP).fill(0))),CS={},cd={},res=[];
@@ -166,7 +166,7 @@ document.body.classList.add("pall");print();document.body.classList.remove("pall
 const TOUR={
 0:[["#nav","Bu düymələrlə bölmələr arasında keçid edirsiniz: Zənglər, Siniflər, Müəllimlər, Cədvəl. Soldan sağa doldurun."],["#s0 .row","Zəng cədvəli üçün dərs sayını, birinci dərsin başlama saatını, dərs və tənəffüs müddətini yazın. Böyük tənəffüs varsa, neçənci dərsdən sonra olduğunu və müddətini də yazın."],["#bp","Yazdıqlarınıza görə hesablanan zənglər burada görünür. Cədvəl bu saatlara əsasən qurulacaq."]],
 1:[["#cf>div:nth-of-type(1)","Sinfin adını yazın (məsələn 5A). Hər sinif ayrıca əlavə olunur."],["#cf>div:nth-of-type(2)","I–V günlərin hər biri üçün həmin gün sinifdə ən çox neçə dərs ola biləcəyini yazın. 0 yazsanız, o gün dərs olmur. “Boş saat ola bilər” seçilməyibsə, dərslər 1-ci saatdan boşluqsuz başlayır."],["#cf .sr","Hər sətirdə fənnin adı və həftəlik saatı yazılır. Sağdakı × həmin sətri silir."],["#cf .bar","“+ Fənn əlavə et” yeni sətir açır. “Sinfi əlavə et” isə sinfi siyahıya yazır."],["#cl .item","Əlavə olunmuş siniflər burada görünür. “Dəyiş” məlumatı formaya qaytarır, “Sil” isə silir (iki dəfə basmaq lazımdır)."]],
-2:[["#tf>.row","Müəllimin adı-soyadı və məktəbdə ola biləcəyi saat aralığı. Dərs bu aralığa tam sığmalıdır. Dərs bu aralığa tam sığmalıdır."],["#tf .chips","İbtidai sinif müəllimi sinfin bütün fənlərini keçirsə, bunu seçin, fənn yazmaq lazım olmur. Eyni fənni ayrıca ixtisaslı müəllim (məsələn, fiziki tərbiyə) keçirsə, o üstün tutulur."],["#tf .box","Hər blokda bir fənn yazın və həmin fənni hansı siniflərdə deyirsə, onları seçin. Müəllim bir neçə fənn deyirsə, “+ Başqa fənn / siniflər əlavə et” ilə blok artırın. Məsələn: Riyaziyyat → 5A, 7A; Şahmat → 6A."],["#td","Müəllimin gələ bildiyi günləri seçin. Yalnız seçilmiş günlərə dərs yazılır."],["#tf .bar","Müəllimi siyahıya yazmaq üçün basın."],["#tl .item","Əlavə olunmuş müəllimlər burada görünür. “Dəyiş” məlumatı formaya qaytarır, “Sil” isə silir."]],
+2:[["#tf>.row","Müəllimin adı və soyadı."],["#tf .box","Hər blokda bir fənn yazın və həmin fənni hansı siniflərdə deyirsə, onları seçin. Müəllim bir neçə fənn deyirsə, “+ Başqa fənn / siniflər əlavə et” ilə blok artırın. Bir blokda bir neçə fənn vergüllə yazıla bilər (məsələn: Riyaziyyat, Həyat bilgisi). Məsələn: Riyaziyyat → 5A, 7A; Şahmat → 6A."],["#td","Hər gün üçün müəllimin gələ bildiyi saat aralığını ayrıca yazın. Gün seçilməyibsə, o gün dərs yazılmır. Məsələn, müəllim bir gün yalnız 1-ci dərs üçün gəlirsə, o günə 08:00–08:45 yazın. Dərs bu aralığa tam sığmalıdır."],["#tf .bar","Müəllimi siyahıya yazmaq üçün basın."],["#tl .item","Əlavə olunmuş müəllimlər burada görünür. “Dəyiş” məlumatı formaya qaytarır, “Sil” isə silir."]],
 3:[["#gpw","Seçilməyibsə, heç bir sinifdə dərslər arasında və ya 1-ci saatdan əvvəl boş saat olmur. Seçilibsə, siniflərdə boş saatlar ola bilər (məsələn, universitet tipli cədvəl). Hər günün dərs sayı yenə də yazdığınız limiti keçmir."],["#gb","Bu düymə cədvəli qurur. Bəyənmədiyiniz halda yenidən basın, başqa variant çıxar."],["#out","Nəticə və ya xəta mesajı burada görünür. Xəta çıxsa, səbəbini yazır."],["#view","Buradan sinif və ya müəllim seçib cədvəlinə baxın."],["#xb","Bütün cədvəli Excel faylı kimi yükləyir: ümumi cədvəl, hər sinif və hər müəllim üçün ayrı vərəq."],["#xb+button","Cari cədvəli çap edir. Yanındakı “Hamısını çap et” isə bütün sinif və müəllimləri ayrı vərəqlərdə çap edir."],["#grid","Seçilmiş sinif və ya müəllimin həftəlik cədvəli. Boş xana boş saatdır, solğun xanalar isə sinfin günlük limitindən sonrakı saatlardır."],["#g1 button:nth-child(2)","Yeni dövr üçün bütün sinifləri və müəllimləri silir (iki dəfə basmaq lazımdır)."]]};
 let TS=[],TI=0;
 function tourStart(){const c=[...document.querySelectorAll("section")].findIndex(s=>s.classList.contains("on"));
